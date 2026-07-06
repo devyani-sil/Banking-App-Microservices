@@ -1,0 +1,96 @@
+package com.example.auth_service.exception;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandlerException {
+
+    @ExceptionHandler(
+            ResourceNotFoundException.class)
+    public ResponseEntity<ErrorDetails>
+    handleResourceNotFoundException(
+            ResourceNotFoundException ex,
+            HttpServletRequest request) {
+
+        ErrorDetails error =
+                new ErrorDetails(
+                        LocalDateTime.now(),
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage(),
+                        request.getRequestURI()
+                );
+
+        return new ResponseEntity<>(
+                error,
+                HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(
+            InsufficientBalanceException.class)
+    public ResponseEntity<ErrorDetails>
+    handleInsufficientBalanceException(
+            InsufficientBalanceException ex,
+            HttpServletRequest request) {
+
+        ErrorDetails error =
+                new ErrorDetails(
+                        LocalDateTime.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage(),
+                        request.getRequestURI()
+                );
+
+        return new ResponseEntity<>(
+                error,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    // catches any exception not handled above
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDetails>
+    handleGlobalException(
+            Exception ex,
+            HttpServletRequest request) {
+
+        ErrorDetails error =
+                new ErrorDetails(
+                        LocalDateTime.now(),
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        ex.getMessage(),
+                        request.getRequestURI()
+                );
+
+        return new ResponseEntity<>(
+                error,
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(
+            MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>>
+    handleValidationException(
+            MethodArgumentNotValidException ex){
+
+        Map<String, String> errors =
+                new HashMap<>();
+
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(error ->
+                        errors.put(
+                                error.getField(),
+                                error.getDefaultMessage()));
+
+        return new ResponseEntity<>(
+                errors,
+                HttpStatus.BAD_REQUEST);
+    }
+}
